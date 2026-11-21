@@ -65,3 +65,17 @@ Upstream pinned to `v18.12.6`; reference Android port is
   so the zip ships `omp-bolt-launcher` and the installer renames on install.
 - `workerHostEntry()` returns the compiled host entry; extra AOT entrypoints are
   only for `new URL("./…worker….ts", import.meta.url)` modules.
+
+## 2026-11-21 — Final session facts
+
+- Upstream has no `postinstall` on any workspace; `bun install` never builds a
+  native addon, so cross-compilation is unaffected by dependency install. Root
+  `prepare` runs `gen:tool-views`, duplicating our explicit step harmlessly.
+- `compile-binary.ts` pulls `buildDocsIndexPayload()` from `docs/**/*.md`, and the
+  coding-agent build expects `gen:stats` output; keep both generation steps before
+  any compile in CI.
+- Worker-entrypoint extraction must scan for
+  `new URL("./…worker….ts", import.meta.url)` literals; on v18.12.6 this yields 5
+  modules. `workerHostEntry()` (compiled path) dispatches them from the binary.
+- Committed tree: `54ed177` (initial) and `734c2ec` (guarded version probes).
+  `upstream/`, `out/`, `.scratch/` stay gitignored.

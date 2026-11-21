@@ -7,33 +7,36 @@ Track A (`omp`, bionic, stock Bun) and Track B (`omp-bolt`, Pi-Bolt AOT, glibc).
 
 ## Progress
 
-- Repo scaffold complete and committed (`54ed177`): `.gitignore`, `patches/0001..0003`,
-  `termux/*`, `.github/workflows/build.yml`, `termux/README.md`, memory bank.
-- Patches verified on a clean `v18.12.6` clone: all three apply via `git apply`;
-  second run reports "already applied" (idempotent). Patched files: 14, exactly
-  0002's 12 plus loader and `compile-binary.ts`.
-- Loader override tested under Bun: `OMP_PACKAGE_DIR=/tmp/fake` puts
-  `/tmp/fake/pi_natives.android-arm64.node` in the candidate list;
-  `getAddonFilenames({tag:"android-arm64"})` returns the literal addon name.
-- Installers simulated against a fake `PREFIX` with a fake glibc loader:
-  Track A `install.sh` verifies SHA256SUMS, installs into `libexec/omp`, and the
-  launcher exports the full env contract (`TMPDIR`, `OMP_PACKAGE_DIR`,
-  `PI_NATIVES_DIR`, `LANG`, `SHELL`, `OMP_MANAGED_INSTALL=1`, no `LD_PRELOAD`).
-  Track B `install-bolt.sh` installs `omp-bolt-launcher` as `$PREFIX/bin/omp-bolt`;
-  both launcher branches (patched interpreter, loader fallback) execute.
-- `bash -n` and `shellcheck -S warning` clean on all `termux/*.sh`; workflow
-  YAML parses with jobs `android`, `bolt`; `verify-artifacts.sh` fails cleanly on
-  missing artifacts.
+- Committed `54ed177` (initial tree) and `734c2ec` (guarded installer version probe,
+  verification notes). Working tree clean; `upstream/` is an ignored scratch clone.
+- `patches/0001..0003` apply to a clean `v18.12.6` checkout via `git apply`; a
+  second run reports "already applied". Exactly 14 files change: 0002's 12 plus
+  `loader-state.js` and `compile-binary.ts`.
+- Loader under Bun: `OMP_PACKAGE_DIR=/tmp/fake` produces the candidate
+  `/tmp/fake/pi_natives.android-arm64.node`; `getAddonFilenames({tag:"android-arm64"})`
+  returns `pi_natives.android-arm64.node`.
+- Installer simulations against a fake `PREFIX` with a fake glibc loader:
+  `sha256sum -c --strict` gates both installs, `libexec/{omp,omp-bolt}` layout is
+  correct, Track A launcher exports `TMPDIR`, `OMP_PACKAGE_DIR`, `PI_NATIVES_DIR`,
+  `LANG`, `SHELL`, `OMP_MANAGED_INSTALL=1` and unsets `LD_PRELOAD`; Track B launcher
+  runs both branches (patched interpreter, loader fallback); `install-bolt.sh`
+  installs `omp-bolt-launcher` as `$PREFIX/bin/omp-bolt`.
+- Worker extraction over the patched tree yields 5 module paths
+  (`eval/js/worker-entry.ts`, `terminal-output-worker.ts`,
+  `parent-watchdog-worker.ts`, `tab-worker-entry.ts`, `computer/worker-entry.ts`).
+- `shellcheck -S warning` and `bash -n` clean on `termux/*.sh`; both TS drivers
+  pass `bun build`; workflow YAML parses with jobs `android` and `bolt`;
+  `verify-artifacts.sh` fails cleanly when artifacts are missing.
 
 ## Blockers
 
-- No CI run yet (needs the repo pushed; `bolt` requires a public repo for the
-  free arm64 runner, otherwise the plan's QEMU fallback needs approval).
-- Device verification (both tracks) not run; needs release artifacts.
+- No CI run yet (needs the repo pushed; `bolt` needs a public repo for the free
+  arm64 runner, otherwise the plan's QEMU fallback needs approval).
+- Device verification not run; needs release artifacts.
 
 ## Next actions
 
-1. Push repo, run `workflow_dispatch`, confirm `verify-artifacts.sh` and the
-   Track B AOT log (`mapped: true`, `image registered: true`).
+1. Push, run `workflow_dispatch`, confirm `verify-artifacts.sh` passes and Track B
+   logs `mapped: true` and `image registered: true`.
 2. Tag `v18.12.6-termux.1` to attach both zips to a release.
 3. Device: install both zips, run the README verification commands.
