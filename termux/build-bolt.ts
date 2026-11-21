@@ -22,6 +22,10 @@ const transformersVersion = (
 	await Bun.file(path.join(src, "node_modules/@huggingface/transformers/package.json")).json()
 ).version as string;
 
+// Pi-Bolt emits no AOT image without a bytecode order file; pass 1 of the
+// workflow records one with BUN_BYTECODE_ORDER_OUT and pass 2 consumes it.
+const order = process.env.OMP_BYTECODE_ORDER;
+
 await compileCodingAgent({
 	repoRoot: src,
 	entrypoint: entry,
@@ -30,4 +34,5 @@ await compileCodingAgent({
 	transformersVersion,
 	native: null,
 	executablePath: process.env.PIBOLT_BUN,
+	...(order ? { bytecodeOrder: order } : {}),
 });

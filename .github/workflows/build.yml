@@ -156,15 +156,7 @@ jobs:
       - name: Compile AOT image
         env:
           OMP_SRC: ${{ github.workspace }}/upstream
-          OUT: ${{ github.workspace }}/out/omp-bolt
           PIBOLT_BUN: ${{ github.workspace }}/runtime/pi-bolt-runtime-linux-arm64/bun
-          BUN_STATIC_HEAP: "1"
-          BUN_AOT: "1"
-          BUN_AOT_JIT: "0"
-          BUN_AOT_CPU: baseline
-          BUN_JSC_omitBytecodeFromStaticHeap: "1"
-          BUN_JSC_useAOTLoopSplitting: "1"
-          BUN_JSC_aotLoopSplittingPolicy: "5"
         run: |
           set -euo pipefail
           ENTRYPOINTS="$(python3 - "$OMP_SRC/packages/coding-agent/src" <<'PY'
@@ -189,7 +181,26 @@ jobs:
             echo "no worker modules detected; workers stay interpreted"
           fi
           export OMP_ENTRYPOINTS="$ENTRYPOINTS"
-          "$PIBOLT_BUN" termux/build-bolt.ts
+
+          cd "$GITHUB_WORKSPACE"
+          ORDER="$GITHUB_WORKSPACE/out/bytecode.order"
+
+          # Pass 1: bytecode-only build. Pi-Bolt emits no AOT image without a
+          # bytecode order file, so record the functions a normal run touches.
+          OUT="$GITHUB_WORKSPACE/out/omp-bolt.seed" "$PIBOLT_BUN" termux/build-bolt.ts
+          BUN_BYTECODE_ORDER_OUT="$ORDER" ./out/omp-bolt.seed --version
+          head -1 "$ORDER" | grep -qx v2
+          grep -q '^F ' "$ORDER"
+          echo "order file: $(grep -c '^F ' "$ORDER") functions"
+
+          # Pass 2: AOT image ordered by that profile.
+          env BUN_STATIC_HEAP=1 BUN_AOT=1 BUN_AOT_JIT=0 BUN_AOT_CPU=baseline \
+            BUN_JSC_omitBytecodeFromStaticHeap=1 BUN_JSC_useAOTLoopSplitting=1 \
+            BUN_JSC_aotLoopSplittingPolicy=5 BUN_JSC_useImmutableIntrinsics=1 \
+            BUN_JSC_maximumAOTCandidateBytecodeSize=500000 \
+            OMP_BYTECODE_ORDER="$ORDER" \
+            OUT="$GITHUB_WORKSPACE/out/omp-bolt" \
+            "$PIBOLT_BUN" termux/build-bolt.ts
 
       - name: Verify AOT image
         env:
@@ -213,7 +224,8 @@ jobs:
           cp ../termux/omp-bolt omp-bolt-launcher
           chmod +x omp-bolt-launcher
           cp ../termux/install-bolt.sh .
-          zip -j "$GITHUB_WORKSPACE/omp-bolt-termux-aarch64.zip" ./*
+          zip -j "$GITHUB_WORKSPACE/omp-bolt-termux-aarch64.zip" \
+            omp-bolt pi_natives.linux-arm64.node SHA256SUMS omp-bolt-launcher install-bolt.sh
 
       - uses: actions/upload-artifact@v4
         with:
@@ -221,9 +233,6 @@ jobs:
           path: omp-bolt-termux-aarch64.zip
           if-no-files-found: error
 
-      - name: Attach to release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: omp-bolt-termux-aarch64.zip
+      # The AOT image faults on Android kernels (bus error at the fixed code
+      # address), so it stays a build artifact rather than a release asset.
 

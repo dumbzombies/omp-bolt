@@ -6,7 +6,13 @@ Two Termux artifacts for [oh-my-pi](https://github.com/can1357/oh-my-pi)
 | Track | Artifact | Runtime | Addon | Installer |
 |---|---|---|---|---|
 | A | `omp-termux-aarch64.zip` | stock Bun single-file binary, bionic | `pi_natives.android-arm64.node` | `install.sh` |
-| B | `omp-bolt-termux-aarch64.zip` | Pi-Bolt AOT image (`bolt-v1.2.1`), glibc | `pi_natives.linux-arm64.node` | `install-bolt.sh` |
+| B | `omp-bolt-termux-aarch64.zip` (experimental) | Pi-Bolt AOT image (`bolt-v1.2.1`), glibc | `pi_natives.linux-arm64.node` | `install-bolt.sh` |
+
+Track B does not run on Android kernels: the AOT image maps at a fixed address
+and the launch dies with `Bus error at address 0x1600000000` (the same failure
+hits Pi-Bolt's own release binary). `BUN_AOT=0 omp-bolt …` runs it from bytecode,
+which makes it equivalent to Track A plus a glibc loader. CI still builds it for
+reference; it is not attached to releases.
 
 Both share `$HOME/.omp/agent/*`. Both set `OMP_MANAGED_INSTALL=1`, so `omp update`
 is disabled; upgrades come from these release zips.
