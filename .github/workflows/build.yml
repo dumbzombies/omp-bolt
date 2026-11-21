@@ -130,13 +130,14 @@ jobs:
 
       - name: Build glibc addon
         env:
+          OMP_SRC: ${{ github.workspace }}/upstream
           OUT: ${{ github.workspace }}/out
         run: |
           set -euo pipefail
           export CMAKE_POLICY_VERSION_MINIMUM=3.5
           export PCRE2_SYS_STATIC=1
           mkdir -p "$OUT"
-          cd crates
+          cd "$OMP_SRC/crates"
           npx --yes --package @napi-rs/cli@3.7.2 napi build \
             --manifest-path pi-natives/Cargo.toml \
             --package-json-path ../packages/natives/package.json \
