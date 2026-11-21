@@ -2,38 +2,31 @@
 
 ## Goal
 
-Build the Termux artifact for oh-my-pi v18.12.6 on GitHub Actions: stock Bun
-bionic single-file binary plus the real `pi_natives.android-arm64.node` addon.
-Nothing compiles on the phone.
+Ship the Termux artifact for oh-my-pi v18.12.6: stock Bun bionic single-file
+binary plus the real `pi_natives.android-arm64.node`. Built only on GitHub
+Actions.
 
 ## Progress
 
-- Track B (Pi-Bolt AOT) removed at the user's decision: its image faults on
-  Android kernels (`Bus error at address 0x1600000000`), reproduced with
-  Pi-Bolt's own release binary. Patch 0003, `build-bolt.ts`, `omp-bolt`,
-  `install-bolt.sh` and the `bolt` job are gone; README records why.
-- Single job `android` (ubuntu-24.04): NDK addon build, Android compile,
-  verifier, zip, artifact, tag release.
-- Local proof: `bun termux/build-omp-android.ts` produced a 192 MB
-  `bun-linux-arm64-android` binary; it runs on this phone (`omp/18.12.6`);
-  `file` reports "for Android 28"; LOAD aligns `0x4000`/`0x10000`; INTERP
-  `/system/bin/linker64`; NEEDED `libc.so libm.so libdl.so
-  libicui18n.so.79 libicuuc.so.79`.
-- Addon is mandatory: stub mode dies at startup on `editDescription`.
-- Patches apply to a clean `v18.12.6` clone via `git apply` and via the
-  `patch -F3` fallback; a second run reports "already applied".
-- `shellcheck -S warning` and `bash -n` clean; workflow YAML parses with the
-  single `android` job.
+- CI green: run 44863379314 builds, verifies, and uploads
+  `omp-termux-aarch64` (`omp.bin` 216 MB, addon 98 MB, SHA256SUMS, launcher,
+  installer).
+- Installed on this phone at `$PREFIX/libexec/omp/` + `$PREFIX/bin/omp`.
+- Device evidence: `omp --version` → `omp/18.12.6`; addon
+  `__piNativesBuildVersion()` → `18.12.6`; `omp -p "print ok"` → `ok`; shell
+  tool writes `$TMPDIR` (`$PREFIX/tmp`); native grep hit count correct; `ps -A`
+  works; `read` returns the exact requested line.
+- Track B (Pi-Bolt AOT) dropped: fixed-address code image faults on Android
+  (`Bus error at address 0x1600000000`), reproduced with Pi-Bolt's own binary.
+- Repo: single `android` job; two patches (0001 loader, 0002 Rust/TS Android
+  gates); `shellcheck`/`bash -n` clean; patch flow idempotent.
 
 ## Blockers
 
-- Waiting on the Track A CI run to produce the first installable zip (addon
-  build + compile + verify).
+- None for Track A.
 
 ## Next actions
 
-1. Confirm run https://github.com/dumbzombies/omp-bolt/actions/runs/ is green
-   and download `omp-termux-aarch64`.
-2. Install on device, run the README verification commands, report broken
-   features with their exact errors.
-3. Tag `v18.12.6-termux.1` once device checks pass.
+1. Tag `v18.12.6-termux.1` to publish the zip as a release asset.
+2. Optional device probes worth reporting: clipboard via `termux-clipboard-set`,
+   image attachment, browser/computer tools (no Chrome/display on Termux).
