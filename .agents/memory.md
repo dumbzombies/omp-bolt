@@ -79,3 +79,32 @@ Upstream pinned to `v18.12.6`; reference Android port is
   modules. `workerHostEntry()` (compiled path) dispatches them from the binary.
 - Committed tree: `54ed177` (initial) and `734c2ec` (guarded version probes).
   `upstream/`, `out/`, `.scratch/` stay gitignored.
+
+## 2026-11-21 — Verifier and Pi-Bolt evidence pass
+
+- `llvm-readelf -h` prints `Machine: AArch64`, not `ARM aarch64`; the plan's
+  grep was wrong. `file` prints `ARM aarch64` but does not print "for Android"
+  on every release (file 5.41 here), so the Android identity test is
+  `.note.android.ident` present in `llvm-readelf -n`.
+- Bun's own `bun-linux-aarch64-android` template (v1.4.5) has LOAD aligns
+  `0x10000` and `0x4000`, interpreter `/system/bin/linker64`, NEEDED
+  `libc.so`, `libm.so`, `libdl.so` — no `liblog.so`. Therefore: alignment is a
+  lower bound (`>= 0x4000`), never equality; drop the `liblog.so` requirement;
+  `libc.so` + no `GLIBC_` + interpreter check are the real bionic gates.
+- Verified `verify-artifacts.sh` end to end against the real Bun Android
+  template (passes structurally; fails only on the injected-stamp check), and
+  the positive path with a synthetic stamp plus `oh-my-pi` bytes → `OK`.
+- Pi-Bolt release assets: `pi-bolt-runtime-linux-arm64.tar.gz` is the compiler
+  runtime; `pi-bolt-kit-linux-arm64.tar.gz` is only a compile kit (tree +
+  training profile + `kit.json`), no `bun`. `kit.json` confirms the env set and
+  `--target=bun-linux-arm64 --bytecode --splitting --compile-exec-argv=--smol`.
+- Locally, the downloaded runtime produced no static-heap/AOT image for a
+  hello-world and printed `[static heap] 0 bytes in executable, mapped: false`
+  (format confirmed, value not). Running it via `glibc-runner` fails compile
+  with `BunSectionNotFound` because `/proc/self/exe` is the loader; a
+  `patchelf`-ed copy compiles fine. CI's `image registered: true` +
+  `mapped: true` greps stay the hard gate; never weaken them to ship a
+  bytecode-only image.
+- All 15 workflow `run:` blocks render to syntactically valid bash; the
+  heredoc-based worker-entrypoint extraction executes and yields 5 modules;
+  `patch -F3` fallback applies all three patches too.

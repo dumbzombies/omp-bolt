@@ -34,28 +34,38 @@ fail() {
 }
 
 file "$BIN" | grep -q 'ARM aarch64' || fail "omp.bin is not arm64"
-file "$BIN" | grep -q 'for Android' || fail "omp.bin is not an Android executable"
 
+# `.note.android.ident` is stamped by the NDK linker; `file` only prints
+# "for Android" on some releases, so test the note itself.
 load_align() {
 	llvm-readelf -l "$1" | awk '/LOAD/ {print $NF}' | sort -u
 }
 
 for f in "$BIN" "$ADDON"; do
+	llvm-readelf -n "$f" | grep -q '\.note\.android\.ident' ||
+		fail "$(basename "$f") has no .note.android.ident (not an NDK/bionic link)"
 	aligns="$(load_align "$f")"
-	for a in $aligns; do
-		[ "$a" = "0x4000" ] || fail "$(basename "$f") LOAD align $a, want 0x4000"
-	done
 	[ -n "$aligns" ] || fail "$(basename "$f") has no LOAD segments"
+	for a in $aligns; do
+		# Android 15+ requires >= 16 KB; Bun's own Android template uses both
+		# 0x4000 and 0x10000, so this is a lower bound, not equality.
+		[ $((a)) -ge 16384 ] || fail "$(basename "$f") LOAD align $a, want >= 0x4000"
+	done
 done
 
-llvm-readelf -h "$ADDON" | grep -q 'ARM aarch64' || fail "addon is not arm64"
+llvm-readelf -h "$ADDON" | grep -q 'AArch64' || fail "addon is not arm64"
 
 if llvm-readelf -d "$ADDON" | grep NEEDED | grep -q 'GLIBC_'; then
 	llvm-readelf -d "$ADDON" | grep NEEDED >&2
 	fail "addon links against glibc; expected bionic"
 fi
-llvm-readelf -d "$ADDON" | grep NEEDED | grep -q 'liblog.so' || fail "addon has no liblog.so NEEDED entry"
+llvm-readelf -d "$ADDON" | grep NEEDED | grep -q 'libc.so' || fail "addon does not link bionic libc.so"
+llvm-readelf -d "$BIN" | grep NEEDED | grep -q 'libc.so' || fail "omp.bin does not link bionic libc.so"
 llvm-readelf -d "$BIN" | grep NEEDED | grep -q 'GLIBC_' && fail "omp.bin links against glibc"
+# bionic binaries run through /system/bin/linker64; a glibc interpreter means the
+# compile silently targeted the host toolchain.
+llvm-readelf -l "$BIN" | grep -q 'system/bin/linker64' ||
+	fail "omp.bin interpreter is not bionic linker64"
 
 strings -a "$ADDON" | grep -q 'PI_NATIVES_VERSION_STAMP:' || fail "addon carries no version stamp"
 
