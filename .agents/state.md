@@ -27,8 +27,13 @@ Actions.
 
 - None for Track A.
 
+- Release `v18.12.6-termux.1` published with `omp-termux-aarch64.zip`,
+  `omp-termux-aarch64.zip.sha256`, `install.sh`. One-shot install verified on
+  device:
+  `curl -fsSL https://raw.githubusercontent.com/dumbzombies/omp-bolt/master/install.sh | bash`.
+
 ## Next actions
 
-1. Tag `v18.12.6-termux.1` to publish the zip as a release asset.
+1. None required; bump `v18.12.6-termux.N` for a new artifact.
 2. Optional device probes worth reporting: clipboard via `termux-clipboard-set`,
    image attachment, browser/computer tools (no Chrome/display on Termux).
