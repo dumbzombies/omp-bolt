@@ -155,3 +155,13 @@ Upstream pinned to `v18.12.6`; reference Android port is
 - The AOT verify greps now match what pi-bolt 1.2.1 prints
   (`mapped: true`, `[aot] image of …`); the older "image registered" line is
   absent.
+
+## 2026-11-21 — Superseded: Track B dropped
+
+The user chose Track A only. Removed: `patches/0003-bolt-entrypoints.patch`,
+`termux/build-bolt.ts`, `termux/omp-bolt`, `termux/install-bolt.sh`, the `bolt`
+job, `PIBOLT_TAG`, and all release/README references. Rationale recorded in the
+README: Pi-Bolt's AOT code image maps at a fixed address and Android kernels
+fault it (`Bus error at address 0x1600000000`); `BUN_AOT=0` degrades to bytecode,
+which the bionic binary already provides more simply. Earlier entries about
+Track B stay as history.
