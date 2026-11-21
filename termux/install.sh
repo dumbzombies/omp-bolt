@@ -20,5 +20,7 @@ mkdir -p "$PREFIX/tmp"
 install -m 0755 omp.bin "$LIBEXEC/omp.bin"
 install -m 0644 pi_natives.android-arm64.node "$LIBEXEC/pi_natives.android-arm64.node"
 install -m 0755 omp "$PREFIX/bin/omp"
+# Alias: this build answers to both names.
+ln -sf omp "$PREFIX/bin/omp-bolt"
 
 echo "installed: $("$PREFIX/bin/omp" --version 2>/dev/null || echo 'omp (version check failed)')"

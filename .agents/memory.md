@@ -188,3 +188,9 @@ falls back to `termux-clipboard-set`); not device-tested.
 
 Disk is tight on the phone (`/data` ~0 free at worst): keep `upstream/`
 gitignored and delete scratch builds after use; the rebuild script re-clones.
+
+## 2026-11-21 — `omp-bolt` alias
+
+The built binary is reachable as `omp-bolt` (the old Track B name) as well as
+`omp`: the installer creates `$PREFIX/bin/omp-bolt` as a symlink to the `omp`
+launcher, and the device install has it. Same artifact, same env.

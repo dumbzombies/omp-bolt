@@ -16,6 +16,7 @@ bash omp-termux/install.sh
 
 ```
 $PREFIX/bin/omp                                  launcher
+$PREFIX/bin/omp-bolt                             alias (symlink to omp)
 $PREFIX/libexec/omp/omp.bin                      bionic binary
 $PREFIX/libexec/omp/pi_natives.android-arm64.node
 ```
@@ -73,7 +74,7 @@ the reference bundle mode: `OMP_ANDROID_BUNDLE=1 bun run gen:bundle` in
 
 ## Not shipped
 
-Pi-Bolt AOT (`omp-bolt`, glibc + `BUN_AOT=1`) was built and tested, then dropped:
+Pi-Bolt AOT (glibc + `BUN_AOT=1`) was built and tested, then dropped:
 its code image maps at a fixed address and Android kernels fault it
 (`Bus error at address 0x1600000000`, reproduced with Pi-Bolt's own release
 binary). `BUN_AOT=0` runs it from bytecode, which is no better than the bionic
