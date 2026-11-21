@@ -11,14 +11,23 @@ const extra = (process.env.OMP_ENTRYPOINTS ?? "").split("\n").filter(Boolean);
 const { compileCodingAgent } = await import(
 	pathToFileURL(path.join(src, "packages/coding-agent/scripts/compile-binary.ts")).href
 );
-const entry = path.join(src, "packages/coding-agent/src/cli.ts");
+const agentDir = path.join(src, "packages/coding-agent");
+const entry = path.join(agentDir, "src/cli.ts");
+
+// Upstream's build-binary.ts runs with this cwd; workspace imports
+// (`@oh-my-pi/pi-ai/...`) only resolve from inside the package tree.
+process.chdir(agentDir);
+
+const transformersVersion = (
+	await Bun.file(path.join(src, "node_modules/@huggingface/transformers/package.json")).json()
+).version as string;
 
 await compileCodingAgent({
 	repoRoot: src,
 	entrypoint: entry,
 	entrypoints: extra.length ? [entry, ...extra] : undefined,
 	outfile: out,
-	transformersVersion: "4.2.0",
+	transformersVersion,
 	native: null,
 	executablePath: process.env.PIBOLT_BUN,
 });
