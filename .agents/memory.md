@@ -52,3 +52,16 @@ Upstream pinned to `v18.12.6`; reference Android port is
 - File-flow collision: Track B's launcher and binary cannot both live in a
   zip produced with `zip -j`; the launcher ships as `omp-bolt-launcher` and
   `install-bolt.sh` installs it as `$PREFIX/bin/omp-bolt`.
+
+## 2026-11-21 — Launcher/installer verification notes
+
+- Installers run `sha256sum -c --strict` before touching `$PREFIX`; both print
+  the version through the installed launcher, guarded so a failed probe cannot
+  fail the install.
+- `LD_PRELOAD` must be unset *before* the launcher's bash starts; the script's
+  own `unset LD_PRELOAD` only protects children. A preload pointing at a missing
+  library kills bash itself.
+- Track B: `omp-bolt` (launcher) and `omp-bolt` (image) collide under `zip -j`,
+  so the zip ships `omp-bolt-launcher` and the installer renames on install.
+- `workerHostEntry()` returns the compiled host entry; extra AOT entrypoints are
+  only for `new URL("./…worker….ts", import.meta.url)` modules.

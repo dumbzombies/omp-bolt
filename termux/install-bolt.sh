@@ -28,4 +28,4 @@ else
 	echo "patchelf missing: install it (pkg install patchelf) or the launcher will use glibc-runner's loader" >&2
 fi
 
-echo "installed: $("$PREFIX/bin/omp-bolt" --version)"
+echo "installed: $("$PREFIX/bin/omp-bolt" --version 2>/dev/null || echo 'omp-bolt (version check failed)')"

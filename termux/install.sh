@@ -21,4 +21,4 @@ install -m 0755 omp.bin "$LIBEXEC/omp.bin"
 install -m 0644 pi_natives.android-arm64.node "$LIBEXEC/pi_natives.android-arm64.node"
 install -m 0755 omp "$PREFIX/bin/omp"
 
-echo "installed: $("$PREFIX/bin/omp" --version)"
+echo "installed: $("$PREFIX/bin/omp" --version 2>/dev/null || echo 'omp (version check failed)')"
