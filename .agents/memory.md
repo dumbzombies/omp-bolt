@@ -129,3 +129,29 @@ Upstream pinned to `v18.12.6`; reference Android port is
   available on Android` raised from `describeTool` during MCP tool refresh. The
   stub proxy is a diagnostic fallback, not a runnable configuration; the
   README now says so.
+
+## 2026-11-21 — Pi-Bolt AOT: real trigger and Termux incompatibility
+
+- Pi-Bolt 1.2.1 emits **no** AOT image unless a bytecode order file is supplied.
+  Proof on device: identical `hello.ts` builds are 107,203,384 B without an order
+  file and 108,710,712 B with one (`v2` header plus at least one `F <hash>`
+  line), and only the latter prints `[aot] image of … bytes mapped`.
+  Bun.build's top-level `bytecodeOrder` is ignored; `compile.bytecodeOrder`
+  works. `patch 0003` now exposes `bytecodeOrder` and `build-bolt.ts` reads
+  `OMP_BYTECODE_ORDER`.
+- Order files are written at run time with `BUN_BYTECODE_ORDER_OUT`; CI does a
+  bytecode seed build, runs `seed --version` to record the order, then rebuilds
+  with AOT. On device this produced `[aot] image of 85458944 bytes mapped,
+  70123520 of them code` and `[static heap] 262537256 bytes … mapped: true`.
+- The agent bundle contains a 325,513-byte top-level module, above the default
+  `maximumAOTCandidateBytecodeSize` (262144); with
+  `omitBytecodeFromStaticHeap=1` the build stops. `BUN_JSC_maximumAOTCandidateBytecodeSize=500000`
+  builds it.
+- Track B does not run on Android: launch panics `Bus error at address
+  0x1600000000` (the fixed AOT code-image address). Pi-Bolt's own released `pi`
+  crashes identically here, so it is an engine/Android-kernel limitation.
+  `BUN_AOT=0` runs the same binary from bytecode. Consequence: Track B stays an
+  experimental CI artifact, no release asset, README documents the failure.
+- The AOT verify greps now match what pi-bolt 1.2.1 prints
+  (`mapped: true`, `[aot] image of …`); the older "image registered" line is
+  absent.
