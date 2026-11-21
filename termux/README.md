@@ -36,6 +36,7 @@ $PREFIX/libexec/omp/pi_natives.android-arm64.node
 
 ```bash
 omp --version                                  # omp/18.12.6
+omp-bolt --version                             # omp-bolt/18.12.6 (same binary)
 omp -p "print ok"                              # ok
 omp -p 'run: echo $TMPDIR && touch $TMPDIR/x && ls $TMPDIR'
 bun -e 'console.log(require("'"$PREFIX"'/libexec/omp/pi_natives.android-arm64.node").__piNativesBuildVersion())'

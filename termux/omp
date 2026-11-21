@@ -18,4 +18,10 @@ export SHELL="$PREFIX/bin/bash"
 export PATH="$PREFIX/bin:$PATH"
 export OMP_MANAGED_INSTALL=1
 
+# The symlinked name decides the reported identity (`omp-bolt --version` ->
+# omp-bolt/18.12.6); process.execPath below is the real binary name.
+case "$(basename "$0")" in
+	omp-bolt) export OMP_BIN_NAME=omp-bolt ;;
+esac
+
 exec "$LIBEXEC/omp.bin" "$@"
