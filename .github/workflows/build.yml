@@ -77,6 +77,8 @@ jobs:
           cp ../termux/omp ../termux/install.sh .
           zip -j "$GITHUB_WORKSPACE/omp-termux-aarch64.zip" \
             omp.bin pi_natives.android-arm64.node SHA256SUMS omp install.sh
+          cd "$GITHUB_WORKSPACE"
+          sha256sum omp-termux-aarch64.zip > omp-termux-aarch64.zip.sha256
 
       - uses: actions/upload-artifact@v4
         with:
@@ -88,4 +90,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: omp-termux-aarch64.zip
+          files: |
+            omp-termux-aarch64.zip
+            omp-termux-aarch64.zip.sha256
+            install.sh

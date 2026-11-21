@@ -7,6 +7,15 @@ Actions; the phone only unzips and installs.
 
 ## Install
 
+One shot (Termux, aarch64) - fetches the latest release, checks its SHA-256,
+and installs:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/dumbzombies/omp-bolt/master/install.sh | bash
+```
+
+Manual, from a downloaded `omp-termux-aarch64.zip`:
+
 ```bash
 unzip omp-termux-aarch64.zip -d omp-termux
 bash omp-termux/install.sh

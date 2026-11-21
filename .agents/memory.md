@@ -214,3 +214,15 @@ regardless of the environment. Device `~/bin/omp` is a symlink to
 `$PREFIX/bin/omp`; the old glibc 19.0.1 launcher is kept as `~/bin/omp-19.0.1`.
 Workflow has no push trigger - dispatch after launcher-only changes to refresh
 the zip.
+
+## 2026-11-21 — One-shot installer
+
+User command:
+`curl -fsSL https://raw.githubusercontent.com/dumbzombies/omp-bolt/master/install.sh | bash`
+
+Root `install.sh` is the bootstrap (checks Termux + aarch64, installs
+`curl`/`unzip`/`sha256sum` via pkg if missing, downloads
+`releases/latest/download/omp-termux-aarch64.zip` plus its
+`.sha256`, verifies, unpacks, runs the bundled `install.sh`). Release assets are
+attached only on `v*` tags, so the URL 404s until a release exists. The workflow
+now attaches `omp-termux-aarch64.zip.sha256` and the bootstrap `install.sh`.
