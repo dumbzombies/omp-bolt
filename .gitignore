@@ -1,0 +1,5 @@
+upstream/
+dist/
+out/
+*.log
+.scratch/

@@ -1,0 +1,103 @@
+diff --git a/packages/natives/native/loader-state.js b/packages/natives/native/loader-state.js
+index 1c1e959..0687aa1 100644
+--- a/packages/natives/native/loader-state.js
++++ b/packages/natives/native/loader-state.js
+@@ -32,6 +32,7 @@ import { bindingsHaveReleaseIdentity, bindingsReleaseVersion, containsVersionSta
+  */
+ 
+ const SUPPORTED_PLATFORMS = [
++	"android-arm64",
+ 	"linux-x64",
+ 	"linux-arm64",
+ 	"darwin-x64",
+@@ -783,7 +784,9 @@ export function initLoaderContext(overrides = {}) {
+ 	const platformTag = `${platform}-${process.arch}`;
+ 	const packageVersion = packageJson.version;
+ 	const nativeDir = overrides.nativeDir ?? path.join(import.meta.dir, "..", "native");
+-	const execDir = path.dirname(process.execPath);
++	const execDir = process.env.OMP_PACKAGE_DIR
++		? path.resolve(process.env.OMP_PACKAGE_DIR)
++		: path.dirname(process.execPath);
+ 	const nativesDir = getNativesDir();
+ 	const versionedDir = path.join(nativesDir, packageVersion);
+ 	const userDataDir =
+@@ -890,6 +893,79 @@ export function loadNative() {
+ 		}
+ 	}
+ 
++	if (ctx.platformTag.startsWith("android-")) {
++		// Android/Termux: return a stub instead of throwing. Native features
++		// (PTY, syntax highlighting, etc.) will throw only when actually used.
++		console.warn("[pi-natives] Native addon not available on Android; using stubs. Some features may not work.");
++		const throwNotAvailable = (prop) => {
++			throw new Error(`[pi-natives] \`${String(prop)}\` is not available on Android (native addon not compiled for this platform)`);
++		};
++		return new Proxy({}, {
++			get: (target, prop) => {
++				if (prop === "__esModule" || prop === Symbol.toPrimitive) return undefined;
++				const name = String(prop);
++				// Feature-detection booleans: report as unavailable
++				if (/Available$/i.test(name) || /^(is|has|can|should|supports)/i.test(name)) {
++					return false;
++				}
++				// Setters/configurators: silently no-op (safe to skip)
++				if (/^(set|configure|init|reset)/i.test(name)) {
++					return function(...args) { /* no-op on Android */ };
++				}
++				// JS fallback for sliceWithWidth (ANSI-aware column slice)
++				if (name === "sliceWithWidth") {
++					return function(line, startCol, length, strict, tabWidth) {
++						const s = String(line ?? "");
++						const stripAnsi = (t) => t.replace(/\u001b\[[0-9;]*m/g, "");
++						const visible = stripAnsi(s);
++						const text = visible.slice(startCol, startCol + length);
++						return { text, width: text.length };
++					};
++				}
++				// JS fallback for text wrapping (used by TUI rendering)
++				if (name === "wrapTextWithAnsi") {
++					return function(text, width, tabWidth) {
++						if (!text) return [""];
++						// Simple word-wrap ignoring ANSI codes for width calc
++						const stripAnsi = (s) => s.replace(/\u001b\[[0-9;]*m/g, "");
++						const lines = String(text).split("\n");
++						const out = [];
++						for (const line of lines) {
++							if (stripAnsi(line).length <= width) { out.push(line); continue; }
++							const words = line.split(/(\s+)/);
++							let cur = "";
++							for (const w of words) {
++								if (stripAnsi(cur + w).length <= width) { cur += w; }
++								else {
++									if (cur) out.push(cur);
++									cur = w.trimStart();
++									// Hard-break very long words
++									while (stripAnsi(cur).length > width) {
++										out.push(cur.slice(0, width));
++										cur = cur.slice(width);
++									}
++								}
++							}
++							if (cur) out.push(cur);
++						}
++						return out.length ? out : [""];
++					};
++				}
++				// Stub function that throws only when actually called
++				const stub = function(...args) { throwNotAvailable(prop); };
++				return new Proxy(stub, {
++					get: (t, p) => {
++						if (p === "prototype") return {};
++						// Allow property access on the stub without throwing
++						return undefined;
++					},
++					apply: () => throwNotAvailable(prop),
++					construct: () => throwNotAvailable(prop),
++				});
++			},
++		});
++	}
++
+ 	if (!SUPPORTED_PLATFORMS.includes(ctx.platformTag)) {
+ 		throw new Error(
+ 			`Unsupported platform: ${ctx.platformTag}\n` +

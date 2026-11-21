@@ -1,0 +1,22 @@
+diff --git a/packages/coding-agent/scripts/compile-binary.ts b/packages/coding-agent/scripts/compile-binary.ts
+index 6ed1a84..f4ea70e 100644
+--- a/packages/coding-agent/scripts/compile-binary.ts
++++ b/packages/coding-agent/scripts/compile-binary.ts
+@@ -15,6 +15,8 @@ export interface CodingAgentCompileOptions {
+ 	readonly repoRoot: string;
+ 	/** Absolute CLI entrypoint. */
+ 	readonly entrypoint: string;
++	/** Additional worker entrypoints compiled into the same AOT image. */
++	readonly entrypoints?: readonly string[];
+ 	/** Absolute standalone executable output path. */
+ 	readonly outfile: string;
+ 	/** Concrete Transformers.js version baked into the tiny-model worker. */
+@@ -45,7 +47,7 @@ export async function compileCodingAgent(options: CodingAgentCompileOptions): Pr
+ 	}
+ 	try {
+ 		const output = await Bun.build({
+-			entrypoints: [options.entrypoint],
++			entrypoints: options.entrypoints ?? [options.entrypoint],
+ 			root: options.repoRoot,
+ 			external: [...COMPILED_EXTERNAL_DEPENDENCIES],
+ 			files: options.native ? await embeddedAddonFiles(options.native) : {},

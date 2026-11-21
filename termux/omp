@@ -1,0 +1,21 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# omp for Termux (Track A: stock Bun bionic binary + bionic addon).
+set -euo pipefail
+
+PREFIX="${PREFIX:-/data/data/com.termux/files/usr}"
+LIBEXEC="$PREFIX/libexec/omp"
+
+export TMPDIR="$PREFIX/tmp" TMP="$PREFIX/tmp" TEMP="$PREFIX/tmp"
+mkdir -p "$TMPDIR"
+
+# process.execPath is /system/bin/linker64 under bionic, so the addon is found
+# through OMP_PACKAGE_DIR (patched in patches/0001-android-loader.patch).
+export OMP_PACKAGE_DIR="$LIBEXEC"
+export PI_NATIVES_DIR="${PI_NATIVES_DIR:-$HOME/.omp/natives}"
+export LANG="${LANG:-C.UTF-8}" LC_ALL="${LC_ALL:-C.UTF-8}"
+unset LD_PRELOAD
+export SHELL="$PREFIX/bin/bash"
+export PATH="$PREFIX/bin:$PATH"
+export OMP_MANAGED_INSTALL=1
+
+exec "$LIBEXEC/omp.bin" "$@"
