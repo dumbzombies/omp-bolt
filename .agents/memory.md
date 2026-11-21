@@ -165,3 +165,26 @@ README: Pi-Bolt's AOT code image maps at a fixed address and Android kernels
 fault it (`Bus error at address 0x1600000000`); `BUN_AOT=0` degrades to bytecode,
 which the bionic binary already provides more simply. Earlier entries about
 Track B stay as history.
+
+## 2026-11-21 — Track A artifact verified on device and installed
+
+Run 44863379314 green. Artifact `omp-termux-aarch64.zip`: `omp.bin` 216 MB
+(Bun 1.4.5, `file`: "pie executable, ARM aarch64, interpreter
+/system/bin/linker64"), `pi_natives.android-arm64.node` 98 MB, SHA256SUMS
+verified against the downloaded bytes.
+
+Installed for real at `$PREFIX/libexec/omp/` + `$PREFIX/bin/omp` on this phone.
+Evidence: `omp --version` → `omp/18.12.6`; addon `__piNativesBuildVersion()` →
+`18.12.6`; `omp -p "print ok"` → `ok`; shell tool runs and writes `$TMPDIR`
+(launcher sets `$PREFIX/tmp`); native grep reports correct hit counts; `ps -A`
+returns a process count; the file `read` tool returns the exact requested line.
+
+Native symbols present in the addon: `highlightCode`, `sliceWithWidth`,
+`wrapTextWithAnsi`, `PtySession`, grammar config. Direct calls need the full
+signature (e.g. `highlightCode(code, lang, colors)`, `wrapTextWithAnsi(text,
+width, tabWidth)`) — passing fewer args yields a napi conversion error, not an
+addon bug. Clipboard module is excluded on Android by patch 0002 (the TS path
+falls back to `termux-clipboard-set`); not device-tested.
+
+Disk is tight on the phone (`/data` ~0 free at worst): keep `upstream/`
+gitignored and delete scratch builds after use; the rebuild script re-clones.
