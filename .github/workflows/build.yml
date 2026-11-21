@@ -197,8 +197,11 @@ jobs:
         run: |
           set -euo pipefail
           ./out/omp-bolt --version 2>&1 | tee /tmp/bolt.log
+          # pi-bolt 1.2.1 prints "[static heap] <n> bytes in executable, mapped: true"
+          # and "[aot] image of <n> bytes mapped, <code> of them code"; it does not
+          # print the older "image registered" line.
           grep -q 'mapped: true' /tmp/bolt.log
-          grep -q 'image registered: true' /tmp/bolt.log
+          grep -Eq '\[aot\] image of [1-9][0-9]* bytes mapped' /tmp/bolt.log
           grep -q '^omp/18\.12\.6$' /tmp/bolt.log
           ! grep -qi 'running from bytecode' /tmp/bolt.log
 
