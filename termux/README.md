@@ -65,8 +65,11 @@ BUN_STATIC_HEAP_VERBOSE=1 omp-bolt --version   # omp/18.12.6, no "running from b
 omp-bolt -p "read package.json and summarize it"
 ```
 
-If the addon cannot load, Track A's launcher still runs: the patched loader
-substitutes a stub proxy (one warning on stderr) instead of aborting.
+If the addon cannot load, Track A still starts: the patched loader substitutes a
+stub proxy (one warning on stderr) instead of aborting. That is a diagnostic
+mode, not a usable CLI — the agent's tool descriptions call native symbols
+(`editDescription` and friends), so any real run needs the addon. Treat a stub
+warning as "install/rebuild the addon", not as a supported configuration.
 
 ## Rebuild
 

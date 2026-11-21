@@ -108,3 +108,24 @@ Upstream pinned to `v18.12.6`; reference Android port is
 - All 15 workflow `run:` blocks render to syntactically valid bash; the
   heredoc-based worker-entrypoint extraction executes and yields 5 modules;
   `patch -F3` fallback applies all three patches too.
+
+## 2026-11-21 — First CI runs and device probe of the Android binary
+
+- `ubuntu-24.04` job: NDK addon build succeeds; `Compile omp binary` failed with
+  `Could not resolve: "@oh-my-pi/pi-agent-core/..."` for every workspace subpath.
+  Cause: the compile driver ran with the repo root as cwd. Upstream's
+  `scripts/build-binary.ts` runs from `packages/coding-agent`; with
+  `process.chdir()` into that package the same compile succeeds locally in ~48 s
+  and yields a 192 MB Android binary.
+- `transformersVersion` must come from the installed
+  `node_modules/@huggingface/transformers/package.json` (lock resolves 4.3.0),
+  not the catalog range.
+- Local artifact checks: `file` says "for Android 28"; LOAD aligns 0x4000 and
+  0x10000; INTERP `/system/bin/linker64`; NEEDED `libc.so`, `libm.so`,
+  `libdl.so`, `libicui18n.so.79`, `libicuuc.so.79` — the versioned ICU sonames
+  resolve on this Android 13 device, so they are not a blocker.
+- The binary runs on the phone: `omp/18.12.6`.
+- Without the addon, stub mode aborts at startup: `editDescription is not
+  available on Android` raised from `describeTool` during MCP tool refresh. The
+  stub proxy is a diagnostic fallback, not a runnable configuration; the
+  README now says so.
