@@ -11,7 +11,8 @@ Actions.
 - CI green: run 44863379314 builds, verifies, and uploads
   `omp-termux-aarch64` (`omp.bin` 216 MB, addon 98 MB, SHA256SUMS, launcher,
   installer).
-- Installed on this phone at `$PREFIX/libexec/omp/` + `$PREFIX/bin/omp`.
+- Installed on this phone at `$PREFIX/libexec/omp/` + `$PREFIX/bin/omp`,
+  plus `$PREFIX/bin/omp-bolt` (symlink alias created by the installer).
 - Device evidence: `omp --version` → `omp/18.12.6`; addon
   `__piNativesBuildVersion()` → `18.12.6`; `omp -p "print ok"` → `ok`; shell
   tool writes `$TMPDIR` (`$PREFIX/tmp`); native grep hit count correct; `ps -A`
