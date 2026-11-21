@@ -194,3 +194,12 @@ gitignored and delete scratch builds after use; the rebuild script re-clones.
 The built binary is reachable as `omp-bolt` (the old Track B name) as well as
 `omp`: the installer creates `$PREFIX/bin/omp-bolt` as a symlink to the `omp`
 launcher, and the device install has it. Same artifact, same env.
+
+## 2026-11-21 — Invoked-name version string
+
+`omp-bolt --version` reports `omp-bolt/18.12.6` while `omp --version` stays
+`omp/18.12.6`. `patch 0003-version-name.patch` replaces the hardcoded `bin` in
+`packages/utils/src/cli.ts` with `process.env.OMP_BIN_NAME || bin`, and the
+launcher exports `OMP_BIN_NAME=omp-bolt` when its own basename is `omp-bolt`
+(the symlink name is the only place the alias survives `exec`). Verified on
+device with the rebuilt artifact; `omp-bolt -p "print ok"` returns `ok`.

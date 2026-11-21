@@ -13,7 +13,8 @@ Actions.
   installer).
 - Installed on this phone at `$PREFIX/libexec/omp/` + `$PREFIX/bin/omp`,
   plus `$PREFIX/bin/omp-bolt` (symlink alias created by the installer).
-- Device evidence: `omp --version` → `omp/18.12.6`; addon
+- Device evidence: `omp --version` → `omp/18.12.6`, `omp-bolt --version` →
+  `omp-bolt/18.12.6`, `omp-bolt -p "print ok"` → `ok`; addon
   `__piNativesBuildVersion()` → `18.12.6`; `omp -p "print ok"` → `ok`; shell
   tool writes `$TMPDIR` (`$PREFIX/tmp`); native grep hit count correct; `ps -A`
   works; `read` returns the exact requested line.
