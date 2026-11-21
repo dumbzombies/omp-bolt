@@ -1,7 +1,0 @@
-name: probe
-on: workflow_dispatch
-jobs:
-  p:
-    runs-on: ubuntu-24.04
-    steps:
-      - run: echo hi
