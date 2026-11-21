@@ -203,3 +203,14 @@ launcher, and the device install has it. Same artifact, same env.
 launcher exports `OMP_BIN_NAME=omp-bolt` when its own basename is `omp-bolt`
 (the symlink name is the only place the alias survives `exec`). Verified on
 device with the rebuilt artifact; `omp-bolt -p "print ok"` returns `ok`.
+
+## 2026-11-21 — Identity follows invoked name; ambient env ignored
+
+The launcher overwrites `OMP_BIN_NAME` with its own `basename "$0"` instead of
+only setting it for `omp-bolt`. With the earlier `case` form, a stray
+`OMP_BIN_NAME=omp-bolt` in the calling shell made `omp` report
+`omp-bolt/18.12.6`. Now `omp` -> `omp/18.12.6`, `omp-bolt` -> `omp-bolt/18.12.6`
+regardless of the environment. Device `~/bin/omp` is a symlink to
+`$PREFIX/bin/omp`; the old glibc 19.0.1 launcher is kept as `~/bin/omp-19.0.1`.
+Workflow has no push trigger - dispatch after launcher-only changes to refresh
+the zip.
